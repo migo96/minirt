@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/04/24 18:37:41 by migo             ###   ########.fr       */
+/*   Updated: 2023/04/25 15:26:47 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 void	set_camera(t_camera *camera, char *map)
 {
 	camera->fov = tan(degrees_to_radians(45)) * 2;
-	camera->location.x = 10;
+	camera->location.x = 5;
 	camera->location.y = 0;
 	camera->location.z = 0;
 	camera->view_point.x = -1;
@@ -43,8 +43,8 @@ void	set_sphere(t_sphere *sphere, char *map)
 	sphere[1].center.x = 0;
 	sphere[1].center.y = 0;
 	sphere[1].center.z = -100;
-	sphere[1].color.x = 0;
-	sphere[1].color.y = 0;
+	sphere[1].color.x = 1;
+	sphere[1].color.y = 1;
 	sphere[1].color.z = 255;
 	sphere[1].radius = 90;
 }
@@ -85,7 +85,7 @@ t_vec	set_lower_left_corner(t_camera *camera)
 	double 	t;
 
 	z = make_vec(0,0,1);
-	z_axis = make_vec(1,1,1);
+	z_axis = make_vec(- camera->view_point.x,- camera->view_point.y, - camera->view_point.z);
 	horizontal = cross(camera->view_point, z);
 	t = sqrt(pow(camera->fov, 2) / dot(horizontal, horizontal));
 	horizontal = v_mul_n(horizontal, t);
@@ -117,7 +117,7 @@ double	hit_sphere(t_sphere s, t_ray r)
 	double	half_b;
 	double	c;
 	double	discriminant;
-	
+
 	oc = v_sub(r.orig, s.center);
 	a = length_squared(r.dir);
 	half_b = dot(oc, r.dir);
@@ -129,44 +129,55 @@ double	hit_sphere(t_sphere s, t_ray r)
 		return ((- half_b - sqrt(discriminant)) / a);
 }
 
+int	set_color(t_sphere sphere, double ratio)
+{
+	int	color_red;
+	int color_green;
+	int color_blue;
+
+	if (ratio < 0)
+		ratio *= -1;
+	color_red = (int)(sphere.color.x * ratio);
+	color_green = (int)(sphere.color.y * ratio);
+	color_blue = (int)(sphere.color.z * ratio);
+	return (color_red * 65536 + color_green * 256 + color_blue);
+}
+
 int	ray_color(t_ray r, t_set set)
 {
 	double	t;
 	t_ray	contact;
 	t_vec	normal;
+	t_ray	refraction;
 	double	ratio;
+	int color;
 
 	t = hit_sphere(set.sphere[0], r);
 	if (t > 0.0)
 	{
 		contact.orig = at(r,t);
-		normal = unit_vector(v_sub(at(r, t), set.sphere[0].center));
 		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
+		normal = unit_vector(v_sub(at(r, t), set.sphere[0].center));
+		refraction.orig = at(r,t);
+		refraction.dir = unit_vector(v_sub(set.sphere[0].center, refraction.orig));
 		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
-		if (ratio < 0)
-			ratio *= -1;
-		// printf("ori %f %f %f\n dir %f %f %f\n t %f\n", contact.orig.x, contact.orig.y, contact.orig.z, contact.dir.x, contact.dir.y, contact.dir.z, t);
-		// if (hit_sphere(set.sphere[0], contact) != -1)
-		// 	return (0);
-		// if (hit_sphere(set.sphere[1], contact) != -1)
-		// 	return (0);
-		// printf("color %f\n", set.sphere[0].color.x * 256 * 256 * ratio + set.sphere[0].color.y * 256 * ratio + set.sphere[0].color.z * ratio);
-		return (set.sphere[0].color.x * 256 * 256 * ratio + set.sphere[0].color.y * 256 * ratio + set.sphere[0].color.z * ratio);
+		color = set_color(set.sphere[0], ratio);
+		// if (hit_sphere(set.sphere[0], refraction) > 0)
+		// 	color = color + set_color(set.sphere[0], 0.1);
+		if (hit_sphere(set.sphere[1], contact) > 0)
+			return (0);
+		return (color);
 	}
 	t = hit_sphere(set.sphere[1], r);
 	if (t > 0.0)
 	{
 		contact.orig = at(r,t);
-		normal = unit_vector(v_sub(at(r, t), set.sphere[0].center));
+		normal = unit_vector(v_sub(at(r, t), set.sphere[1].center));
 		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
 		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
-		if (ratio < 0)
-			ratio *= -1;
-		if (hit_sphere(set.sphere[0], contact) != -1)
+		if (hit_sphere(set.sphere[0], contact) > 0)
 			return (0);
-		// if (hit_sphere(set.sphere[1], contact) != -1)
-		// 	return (0);
-		return (set.sphere[1].color.x * 256 * 256 * ratio + set.sphere[1].color.y * 256 * ratio + set.sphere[1].color.z * ratio);
+		return (set_color(set.sphere[1], ratio));
 	}
 	return (0);
 }
@@ -180,7 +191,6 @@ void	render(t_data *data, t_set set, double height, double width)
 	t_ray	r;
 
 	j = -1;
-	printf("%f %f %f\n", set.camera.lower_left_corner.x, set.camera.lower_left_corner.y, set.camera.location.z);
 	while (++j < height)
 	{
 		i = -1;
@@ -192,7 +202,6 @@ void	render(t_data *data, t_set set, double height, double width)
 			r.dir = v_add(set.camera.lower_left_corner,
 					v_sub(v_add(v_mul_n(set.camera.hor, u),
 							v_mul_n(set.camera.ver, v)), set.camera.location));
-			printf("%f %f %f\n", r.dir.x, r.dir.y, r.dir.z);
 			my_mlx_pixel_put(data, i, j, ray_color(r, set));
 		}
 	}

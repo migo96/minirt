@@ -148,13 +148,11 @@ typedef struct 	s_sphere
 
 double	hit_sphere(t_sphere s, t_ray r)
 {	
-	printf("%f %f %f\n", r.dir.x, r.dir.y, r.dir.z);
 	t_vec3 oc = v_sub(r.orig, s.center);
 	float a = length_squared(r.dir);
 	float b = 2 * dot(oc, r.dir);
 	float c = length_squared(oc) - s.radius * s.radius;
 	float discriminant = b * b - (a * c * 4);
-	printf("%f\n", discriminant);
 	if (discriminant < 0)
 		return (-1.0);
 	else
@@ -330,12 +328,12 @@ int	main()
 	world.sp[0].center.x = 0;
 	world.sp[0].center.y = 0;
 	world.sp[0].center.z = 0;
-	world.sp[0].radius = 0.5;
+	world.sp[0].radius = 2;
 
 	world.sp[1].center.x = 0;
 	world.sp[1].center.y = 0;
 	world.sp[1].center.z = -100;
-	world.sp[1].radius = 100;
+	world.sp[1].radius = 90;
 
 	// Camera
 	float	viewport_height = tan(degrees_to_radians(45)) * 2;
@@ -343,9 +341,9 @@ int	main()
 	float	t = 0;
 
 	t_vec3	z = {0,0,1};
-	t_vec3	origin = {10,10,10};
-	t_vec3 any = {1, 1, 1};
-	t_vec3 z_axis = {-1, -1, -1};
+	t_vec3	origin = {10,0,0};
+	t_vec3 any = {1, 0, 0};
+	t_vec3 z_axis = {-1, 0, 0};
 	t_vec3	horizontal = cross(z_axis, z);
 	t = sqrt(pow(viewport_width, 2) / dot(horizontal, horizontal));
 	horizontal = v_mul_n(horizontal, t);
@@ -358,6 +356,7 @@ int	main()
 	// Render
 
 	int j = 0;
+	printf("%f %f %f\n", lower_left_corner.x, lower_left_corner.y, lower_left_corner.z);
 	while (j < image_height)
 	{
 		int i = 0;

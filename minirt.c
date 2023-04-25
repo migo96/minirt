@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/04/25 15:26:47 by migo             ###   ########.fr       */
+/*   Updated: 2023/04/25 16:02:40 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 void	set_camera(t_camera *camera, char *map)
 {
 	camera->fov = tan(degrees_to_radians(45)) * 2;
-	camera->location.x = 5;
+	camera->location.x = 20;
 	camera->location.y = 0;
 	camera->location.z = 0;
 	camera->view_point.x = -1;
@@ -135,8 +135,8 @@ int	set_color(t_sphere sphere, double ratio)
 	int color_green;
 	int color_blue;
 
-	if (ratio < 0)
-		ratio *= -1;
+	// if (ratio < 0)
+	// 	ratio *= -1;
 	color_red = (int)(sphere.color.x * ratio);
 	color_green = (int)(sphere.color.y * ratio);
 	color_blue = (int)(sphere.color.z * ratio);
@@ -148,25 +148,19 @@ int	ray_color(t_ray r, t_set set)
 	double	t;
 	t_ray	contact;
 	t_vec	normal;
-	t_ray	refraction;
+	t_vec	reflection;
 	double	ratio;
-	int color;
 
 	t = hit_sphere(set.sphere[0], r);
 	if (t > 0.0)
 	{
 		contact.orig = at(r,t);
-		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
 		normal = unit_vector(v_sub(at(r, t), set.sphere[0].center));
-		refraction.orig = at(r,t);
-		refraction.dir = unit_vector(v_sub(set.sphere[0].center, refraction.orig));
+		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
 		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
-		color = set_color(set.sphere[0], ratio);
-		// if (hit_sphere(set.sphere[0], refraction) > 0)
-		// 	color = color + set_color(set.sphere[0], 0.1);
 		if (hit_sphere(set.sphere[1], contact) > 0)
 			return (0);
-		return (color);
+		return (set_color(set.sphere[0], ratio));
 	}
 	t = hit_sphere(set.sphere[1], r);
 	if (t > 0.0)

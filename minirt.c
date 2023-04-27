@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/04/25 16:02:40 by migo             ###   ########.fr       */
+/*   Updated: 2023/04/27 15:23:39 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,17 @@
 void	set_camera(t_camera *camera, char *map)
 {
 	camera->fov = tan(degrees_to_radians(45)) * 2;
-	camera->location.x = 20;
-	camera->location.y = 0;
-	camera->location.z = 0;
+	camera->location.x = 100;
+	camera->location.y = 100;
+	camera->location.z = 100;
 	camera->view_point.x = -1;
-	camera->view_point.y = 0;
-	camera->view_point.z = 0;
+	camera->view_point.y = -1;
+	camera->view_point.z = -1;
 }
 
 void	set_light(t_light *light, char *map)
 {
-	light->location.x = 0;
+	light->location.x = 110;
 	light->location.y = 0;
 	light->location.z = 100;
 	light->power = 0.7;
@@ -47,6 +47,37 @@ void	set_sphere(t_sphere *sphere, char *map)
 	sphere[1].color.y = 1;
 	sphere[1].color.z = 255;
 	sphere[1].radius = 90;
+}
+
+void	set_plane(t_plane *plane, char *map)
+{
+	plane->center.x = 0;
+	plane->center.y = 0;
+	plane->center.z = -120;
+	plane->normal.x = 1;
+	plane->normal.y = 0;
+	plane->normal.z = 1;
+	plane->color.x = 0;
+	plane->color.y = 255;
+	plane->color.z = 0;
+}
+
+void	set_cylinder(t_cylinder *cy, char *map)
+{
+	cy->center.x = 30;
+	cy->center.y = 30;
+	cy->center.z = 0;
+	cy->normal.x = 0;
+	cy->normal.y = 0;
+	cy->normal.z = 1;
+	cy->radius = 10;
+	cy->height = 100;
+	cy->color.x = 255;
+	cy->color.y = 255;
+	cy->color.z = 0;
+	cy->top = v_sub(cy->center, v_mul_n(cy->normal, cy->height / 2));
+	cy->botton = v_add(cy->center, v_mul_n(cy->normal, cy->height / 2));
+	cy->h = unit_vector(v_sub(cy->top, cy->botton));
 }
 
 void	checkmap(char **argv, t_set	*set)
@@ -71,6 +102,10 @@ void	checkmap(char **argv, t_set	*set)
 			set_light(&set->light, map);
 		if (map[0] == 's' && map[1] == 'p')
 			set_sphere(set->sphere, map);
+		if (map[0] == 'p' && map[1] == 'l')
+			set_plane(&set->plane, map);
+		if (map[0] == 'c' && map[1] == 'y')
+			set_cylinder(&set->cy, map);
 		free (map);
 	}
 	close(fd);
@@ -110,6 +145,18 @@ void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
+double hit_plane(t_plane pl, t_ray r)
+{
+	double	coefficient;
+	double	constant;
+
+	coefficient = r.dir.x * pl.normal.x + r.dir.y * pl.normal.y + r.dir.z * pl.normal.z;
+	constant = pl.normal.x * (pl.center.x - r.orig.x) + pl.normal.y * (pl.center.y - r.orig.y) + pl.normal.z * (pl.center.z - r.orig.z);
+	if (coefficient == 0)
+		return (0);
+	return (constant / coefficient);
+}
+
 double	hit_sphere(t_sphere s, t_ray r)
 {
 	t_vec	oc;
@@ -129,18 +176,51 @@ double	hit_sphere(t_sphere s, t_ray r)
 		return ((- half_b - sqrt(discriminant)) / a);
 }
 
-int	set_color(t_sphere sphere, double ratio)
+double	hit_cylinder(t_cylinder cy, t_ray r)
+{
+	t_vec	oc;
+	double	a;
+	double	half_b;
+	double	c;
+	double	discriminant;
+
+	oc = v_sub(r.orig, cy.center);
+	a = dot(r.dir, r.dir) - pow(dot(r.dir, cy.h), 2);
+	half_b = (dot(r.dir, oc) - (dot(r.dir, cy.h) * dot(oc, cy.h))) * 2;
+	c = dot(oc, oc) - pow(dot(oc, cy.h), 2) - (cy.radius *  cy.radius);
+	discriminant = half_b * half_b - a * c * 4;
+	// printf("%f\n", discriminant);
+	if (discriminant < 0)
+		return (-1.0);
+	else
+		return (- half_b + sqrt(discriminant) / 2 * a);
+}
+
+int	set_color(t_vec ob_color, double ratio, double light)
 {
 	int	color_red;
 	int color_green;
 	int color_blue;
+	int color;
+	double ratio1;
 
-	// if (ratio < 0)
-	// 	ratio *= -1;
-	color_red = (int)(sphere.color.x * ratio);
-	color_green = (int)(sphere.color.y * ratio);
-	color_blue = (int)(sphere.color.z * ratio);
-	return (color_red * 65536 + color_green * 256 + color_blue);
+	if (ratio < 0)
+		ratio = 0;
+	ratio1 = ratio + light;
+	if (ratio1 < 1)
+	{
+		color_red = (int)(ob_color.x * ratio1);
+		color_green = (int)(ob_color.y * ratio1);
+		color_blue = (int)(ob_color.z * ratio1);
+	}
+	else
+	{
+		color_red = (int)(ob_color.x * (2 - ratio1) + 255 * (ratio1 - 1));
+		color_green = (int)(ob_color.y * (2 - ratio1) + 255 * (ratio1 - 1));
+		color_blue = (int)(ob_color.z * (2 - ratio1) + 255 * (ratio1 - 1));
+	}
+	color = color_red * 65536 + color_green * 256 + color_blue;
+	return (color);
 }
 
 int	ray_color(t_ray r, t_set set)
@@ -148,30 +228,53 @@ int	ray_color(t_ray r, t_set set)
 	double	t;
 	t_ray	contact;
 	t_vec	normal;
-	t_vec	reflection;
+	t_ray	reflection;
 	double	ratio;
 
 	t = hit_sphere(set.sphere[0], r);
 	if (t > 0.0)
 	{
 		contact.orig = at(r,t);
+		reflection.orig = at(r,t);
 		normal = unit_vector(v_sub(at(r, t), set.sphere[0].center));
 		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
+		reflection.dir = unit_vector(v_sub(r.dir, v_mul_n(normal, 2 * dot(normal, r.dir))));
 		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
 		if (hit_sphere(set.sphere[1], contact) > 0)
 			return (0);
-		return (set_color(set.sphere[0], ratio));
+		return (set_color(set.sphere[0].color, ratio, 0.2));
 	}
 	t = hit_sphere(set.sphere[1], r);
 	if (t > 0.0)
 	{
 		contact.orig = at(r,t);
+		reflection.orig = at(r,t);
 		normal = unit_vector(v_sub(at(r, t), set.sphere[1].center));
 		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
+		reflection.dir = unit_vector(v_sub(r.dir, v_mul_n(normal, 2 * dot(normal, r.dir))));
 		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
 		if (hit_sphere(set.sphere[0], contact) > 0)
-			return (0);
-		return (set_color(set.sphere[1], ratio));
+			return (set_color(set.sphere[1].color, 0, 0.2));
+		return (set_color(set.sphere[1].color, ratio, 0.2));
+	}
+	t = hit_cylinder(set.cy, r);
+	if (t > 0)
+	{
+		contact.orig = at(r,t);
+		printf("%f %f %f\n", contact.orig.x, contact.orig.y, contact.orig.z);
+		return (set_color(set.cy.color, 1, 0));
+	}
+	t = hit_plane(set.plane, r);
+	if (t > 0)
+	{
+		contact.orig = at(r,t);
+		contact.dir = unit_vector(v_sub(set.light.location, contact.orig));
+		ratio = dot(contact.dir, set.plane.normal) / length(set.plane.normal) * length(contact.dir);
+		if (hit_sphere(set.sphere[0], contact) > 0)
+			return (set_color(set.plane.color, 0, 0.2));
+		if (hit_sphere(set.sphere[1], contact) > 0)
+			return (set_color(set.plane.color, 0, 0.2));
+		return(set_color(set.plane.color, ratio, 0.2));
 	}
 	return (0);
 }

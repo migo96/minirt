@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/04/24 18:01:58 by migo             ###   ########.fr       */
+/*   Updated: 2023/04/27 12:51:26 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,25 @@ typedef struct s_sphere
 	t_vec	color;
 }		t_sphere;
 
+typedef struct s_plane
+{
+	t_vec	center;
+	t_vec	normal;
+	t_vec	color;
+}		t_plane;
+
+typedef struct s_cylinder
+{
+	t_vec	center;
+	t_vec	normal;
+	double	height;
+	double	radius;
+	t_vec	top;
+	t_vec	botton;
+	t_vec	h;
+	t_vec	color;
+}		t_cylinder;
+
 typedef struct s_camera
 {
 	t_vec	location;
@@ -62,6 +81,8 @@ typedef struct s_set
 	t_camera	camera;
 	t_sphere	sphere[2];
 	t_light		light;
+	t_plane		plane;
+	t_cylinder	cy;
 }		t_set;
 
 typedef struct s_data

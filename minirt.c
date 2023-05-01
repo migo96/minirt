@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/04/27 15:23:39 by migo             ###   ########.fr       */
+/*   Updated: 2023/04/28 12:14:17 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,14 +64,14 @@ void	set_plane(t_plane *plane, char *map)
 
 void	set_cylinder(t_cylinder *cy, char *map)
 {
-	cy->center.x = 30;
-	cy->center.y = 30;
-	cy->center.z = 0;
+	cy->center.x = 0;
+	cy->center.y = 0;
+	cy->center.z = 5;
 	cy->normal.x = 0;
 	cy->normal.y = 0;
 	cy->normal.z = 1;
-	cy->radius = 10;
-	cy->height = 100;
+	cy->radius = 5;
+	cy->height = 20;
 	cy->color.x = 255;
 	cy->color.y = 255;
 	cy->color.z = 0;
@@ -185,15 +185,44 @@ double	hit_cylinder(t_cylinder cy, t_ray r)
 	double	discriminant;
 
 	oc = v_sub(r.orig, cy.center);
-	a = dot(r.dir, r.dir) - pow(dot(r.dir, cy.h), 2);
-	half_b = (dot(r.dir, oc) - (dot(r.dir, cy.h) * dot(oc, cy.h))) * 2;
-	c = dot(oc, oc) - pow(dot(oc, cy.h), 2) - (cy.radius *  cy.radius);
-	discriminant = half_b * half_b - a * c * 4;
-	// printf("%f\n", discriminant);
+	// a = dot(r.dir, r.dir) - pow(dot(r.dir, cy.h), 2);
+	// half_b = (dot(r.dir, oc) - (dot(r.dir, cy.h) * dot(oc, cy.h))) * 2;
+	// c = dot(oc, oc) - pow(dot(oc, cy.h), 2) - (cy.radius *  cy.radius);
+	// discriminant = half_b * half_b - a * c * 4;
+	a = length_squared(cross(r.dir, cy.normal));
+	half_b = dot(cross(r.dir, cy.normal), cross(oc, cy.normal));
+	c = length_squared(cross(oc, cy.normal)) - pow(cy.radius, 2);
+	discriminant = half_b * half_b - a * c;
 	if (discriminant < 0)
 		return (-1.0);
 	else
-		return (- half_b + sqrt(discriminant) / 2 * a);
+		return (- half_b - sqrt(discriminant) / a);
+}
+
+int      hit_cylinder_cap(t_cylinder *cy, t_ray ray)
+{
+	t_vec    circle_center;
+    float 	root;
+    float 	diameter;
+
+	circle_center = v_add(cy->center, v_mul_n(cy->normal, cy->height));
+	root = dot(v_sub(circle_center, ray.dir), cy->normal);
+	diameter = length(v_sub(circle_center, at(ray, root)));
+	if (fabs(cy->radius) < fabs(diameter))
+		return (0);
+    return (1);
+}
+
+int	cy_boundary(t_cylinder *cy, t_vec contact)
+{
+	double	hit_height;
+	double	max_height;
+
+	hit_height = dot(v_sub(contact, cy->center), cy->normal);
+	max_height = cy->height / 2;
+	if (fabs(hit_height) > max_height)
+		return (0);
+	return (1);
 }
 
 int	set_color(t_vec ob_color, double ratio, double light)
@@ -261,8 +290,10 @@ int	ray_color(t_ray r, t_set set)
 	if (t > 0)
 	{
 		contact.orig = at(r,t);
-		printf("%f %f %f\n", contact.orig.x, contact.orig.y, contact.orig.z);
-		return (set_color(set.cy.color, 1, 0));
+		if (cy_boundary(&set.cy, contact.orig))
+			return (set_color(set.cy.color, 1, 0));
+		if (hit_cylinder_cap(&set.cy, r))
+			return (set_color(set.cy.color, 1, 0));
 	}
 	t = hit_plane(set.plane, r);
 	if (t > 0)

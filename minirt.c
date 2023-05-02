@@ -6,14 +6,51 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/04/28 12:14:17 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/02 15:21:08 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
 
+double	ft_atof(char **map)
+{
+	double	num;
+	double	flag;
+	int		m_flag;
+	double	power;
+
+	num = 0;
+	flag = 0;
+	m_flag = 1;
+	power = 1;
+	while (*map[0] == ' ')
+		(*map)++;
+	if (*map[0] == '-')
+		m_flag = -1;
+	while (1)
+	{
+		if (*map[0] <= '9' && *map[0] >= '0')
+		{
+			num = num * 10 + (*map[0] - 48);
+			if (flag == 1)
+				power *= 10;
+		}
+		else if (*map[0] == '.')
+			flag++;
+		else
+			break ;
+		if (flag == 2)
+			break ;
+		(*map)++;
+	}
+	if (*map[0] != ' ' && *map[0] != '\0' && *map[0] !='\n')
+		exit(1);
+	return (num * flag / power);
+}
+
 void	set_camera(t_camera *camera, char *map)
 {
+	map++;
 	camera->fov = tan(degrees_to_radians(45)) * 2;
 	camera->location.x = 100;
 	camera->location.y = 100;
@@ -25,10 +62,11 @@ void	set_camera(t_camera *camera, char *map)
 
 void	set_light(t_light *light, char *map)
 {
-	light->location.x = 110;
-	light->location.y = 0;
-	light->location.z = 100;
-	light->power = 0.7;
+	map++;
+	light->location.x = ft_atof(&map);
+	light->location.y = ft_atof(&map);
+	light->location.z = ft_atof(&map);
+	light->power = ft_atof(&map);
 }
 
 void	set_sphere(t_sphere *sphere, char *map)
@@ -106,6 +144,7 @@ void	checkmap(char **argv, t_set	*set)
 			set_plane(&set->plane, map);
 		if (map[0] == 'c' && map[1] == 'y')
 			set_cylinder(&set->cy, map);
+		printf("%s\n", map);
 		free (map);
 	}
 	close(fd);

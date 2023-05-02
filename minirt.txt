@@ -1,5 +1,5 @@
-C 123
-L asd
+C 100.0
+L 100.0 0.0 0.0 0.7
 sp asd
 pl asd
 cy asdvzx zc

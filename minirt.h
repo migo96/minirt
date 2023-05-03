@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/04/27 12:51:26 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/03 14:46:30 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,13 @@ typedef struct s_camera
 	double	fov;
 }		t_camera;
 
+typedef struct s_object
+{
+	int				type;
+	void			*object;
+	struct s_object	*next;
+}		t_object;
+
 typedef struct s_set
 {
 	t_camera	camera;
@@ -83,6 +90,7 @@ typedef struct s_set
 	t_light		light;
 	t_plane		plane;
 	t_cylinder	cy;
+	t_object	*objects;
 }		t_set;
 
 typedef struct s_data

@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/03 17:26:30 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/04 13:41:55 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,8 +114,6 @@ t_sphere	*set_sphere(char *map)
 	map = map + 2;
 	sphere = malloc(sizeof(t_sphere) * 1);
 	sphere->center = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
-	// printf("%s\n", map);
-	// printf("%f %f %f\n", sphere->center.x, sphere->center.y, sphere->center.z);
 	sphere->radius = ft_atof(&map);
 	sphere->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
 	return (sphere);
@@ -199,6 +197,17 @@ t_vec	set_lower_left_corner(t_camera *camera)
 	t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
 	vertical = v_mul_n(vertical, t);
 	camera->ver = vertical;
+	if (z_axis.x == 0 && z_axis.y == 0 && (z_axis.z =! 0))
+	{
+		horizontal = make_vec(1, 0, 0);
+		t = sqrt(pow(camera->fov, 2) / dot(horizontal, horizontal));
+		horizontal = v_mul_n(horizontal, t);
+		camera->hor = horizontal;
+		vertical = make_vec(0, 1, 0);
+		t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
+		vertical = v_mul_n(vertical, t);
+		camera->ver = vertical;
+	}
 	return (v_sub(camera->location, v_add(v_add(v_div_n(horizontal, 2),
 					v_div_n(vertical, 2)), z_axis)));
 }
@@ -318,28 +327,39 @@ int	set_color(t_vec ob_color, double ratio, double light)
 	return (color);
 }
 
-double	ratio_sp(t_ray r, double t, t_sphere *sphere, t_set *set)
+double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
 {
 	t_ray	contact;
 	t_vec	normal;
+	t_sphere *sphere;
 	double	ratio;
+	static int i;
 
+	sphere = ob->object;
 	contact.orig = at(r,t);
 	normal = unit_vector(v_sub(at(r, t), sphere->center));
 	contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
 	ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
+	ob->color = sphere->color;
+	ob->ratio = ratio;
+	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
 	return (ratio);
 }
 
-double	ratio_pl(t_ray r, double t, t_plane *pl, t_set *set)
+double	ratio_pl(t_ray r, double t, t_object *ob, t_set *set)
 {
 	t_ray	contact;
 	t_vec	normal;
 	double	ratio;
+	t_plane *pl;
 
+	pl = ob->object;
 	contact.orig = at(r,t);
 	contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
 	ratio = dot(contact.dir, pl->normal) / length(pl->normal) * length(contact.dir);
+	ob->color = pl->color;
+	ob->ratio = ratio;
+	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
 	return (ratio);
 }
 
@@ -347,9 +367,12 @@ int	ray_color(t_ray r, t_set *set)
 {
 	double	t;
 	t_sphere	*sp;
-	t_cylinder 	*cy;
+	t_cylinder	*cy;
 	t_object	*ob;
 	t_plane		*pl;
+	t_vec		color;
+	double		ratio;
+	double		length;
 
 	ob = set->objects;
 	while (ob)
@@ -359,7 +382,9 @@ int	ray_color(t_ray r, t_set *set)
 			sp = ob->object;
 			t = hit_sphere(sp, r);
 			if (t > 0.0)
-				return (set_color(sp->color, ratio_sp(r, t, sp, set), 0.2));
+				ratio_sp(r, t, ob, set);
+			else
+				ob->length = 184467440737095516;
 		}
 		else if (ob->type == 1)
 		{
@@ -373,11 +398,37 @@ int	ray_color(t_ray r, t_set *set)
 			pl = ob->object;
 			t = hit_plane(pl, r);
 			if (t > 0)
-				return (set_color(pl->color, ratio_pl(r, t, pl, set), 0.2));
+				ratio_pl(r, t, ob, set);
+			else
+			{
+				color = make_vec(0, 0, 0);
+				ob->length = 184467440737095516;
+			}
 		}
 		ob = ob->next;
 	}
-	return (0);
+	length = -1;
+	ob = set->objects;
+	while (ob)
+	{
+		if (length == -1)
+		{
+			ratio = ob->ratio;
+			length = ob->length;
+			color = ob->color;
+		}
+		else
+		{
+			if (length > ob->length)
+			{
+				ratio = ob->ratio;
+				length = ob->length;
+				color = ob->color;
+			}
+		}
+		ob = ob->next;
+	}
+	return (set_color(color, ratio, 0.2));
 }
 
 void	render(t_data *data, t_set *set, double height, double width)
@@ -416,6 +467,7 @@ int	main(int argc, char **argv)
 		return (printf("parameter error"));
 	checkmap(argv, &set);
 	set.camera.lower_left_corner = set_lower_left_corner(&set.camera);
+	printf("%f %f %f\n", set.camera.lower_left_corner.x, set.camera.lower_left_corner.y, set.camera.lower_left_corner.z);
 	img.mlx = mlx_init();
 	img.win = mlx_new_window(img.mlx, 800, 600, "ray tracing");
 	img.img = mlx_new_image(img.mlx, 800, 600);

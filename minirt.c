@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/04 13:41:55 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/04 14:49:10 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -467,13 +467,12 @@ int	main(int argc, char **argv)
 		return (printf("parameter error"));
 	checkmap(argv, &set);
 	set.camera.lower_left_corner = set_lower_left_corner(&set.camera);
-	printf("%f %f %f\n", set.camera.lower_left_corner.x, set.camera.lower_left_corner.y, set.camera.lower_left_corner.z);
 	img.mlx = mlx_init();
-	img.win = mlx_new_window(img.mlx, 800, 600, "ray tracing");
-	img.img = mlx_new_image(img.mlx, 800, 600);
+	img.win = mlx_new_window(img.mlx, 1200, 800, "ray tracing");
+	img.img = mlx_new_image(img.mlx, 1200, 800);
 	img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel,
 			&img.line_length, &img.endian);
-	render(&img, &set, 600, 800);
+	render(&img, &set, 800, 1200);
 	mlx_put_image_to_window(img.mlx, img.win, img.img, 0, 0);
 	mlx_loop(img.mlx);
 }

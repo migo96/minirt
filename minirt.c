@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/04 14:49:10 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/08 15:58:36 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,8 @@ double	ft_atof(char **map)
 	power = 1;
 	while (*map[0] == ' ')
 		(*map)++;
+	while (*map[0] == ',')
+		(*map)++;
 	if (*map[0] == '-')
 	{
 		m_flag = -1;	
@@ -95,7 +97,7 @@ void	set_camera(t_camera *camera, char *map)
 	camera->view_point.x = ft_atof(&map);
 	camera->view_point.y = ft_atof(&map);
 	camera->view_point.z = ft_atof(&map);
-	camera->fov = tan(degrees_to_radians(ft_atof(&map))) * 2;
+	camera->fov = tan(degrees_to_radians(ft_atof(&map) / 2.0));
 }
 
 void	set_light(t_light *light, char *map)
@@ -191,7 +193,7 @@ t_vec	set_lower_left_corner(t_camera *camera)
 	z_axis = make_vec(- camera->view_point.x,- camera->view_point.y, - camera->view_point.z);
 	horizontal = cross(camera->view_point, z);
 	t = sqrt(pow(camera->fov, 2) / dot(horizontal, horizontal));
-	horizontal = v_mul_n(horizontal, t);
+	horizontal = v_mul_n(horizontal, t * 1200 / 800);
 	camera->hor = horizontal;
 	vertical = cross(horizontal, camera->view_point);
 	t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
@@ -232,7 +234,7 @@ double hit_plane(t_plane *pl, t_ray r)
 	coefficient = r.dir.x * pl->normal.x + r.dir.y * pl->normal.y + r.dir.z * pl->normal.z;
 	constant = pl->normal.x * (pl->center.x - r.orig.x) + pl->normal.y * (pl->center.y - r.orig.y) + pl->normal.z * (pl->center.z - r.orig.z);
 	if (coefficient == 0)
-		return (0);
+		return (-1);
 	return (constant / coefficient);
 }
 
@@ -327,13 +329,50 @@ int	set_color(t_vec ob_color, double ratio, double light)
 	return (color);
 }
 
+int	hit_something(t_set *set, t_ray contact)
+{
+	t_sphere	*sp;
+	t_cylinder	*cy;
+	t_object	*ob;
+	t_plane		*pl;
+	double		t;
+
+	ob = set->objects;
+	while (ob)
+	{
+		if (ob->type == 0)
+		{
+			sp = ob->object;
+			t = hit_sphere(sp, contact);
+			if (t != -1)
+			{
+				return (t);
+			}
+		}
+		else if (ob->type == 1)
+		{
+			cy = ob->object;
+			return (1);
+		}
+		else if (ob->type == 2)
+		{
+			pl = ob->object;
+			t = hit_plane(pl, contact);
+			if (t > 0)
+				return (t);
+		}
+		ob = ob->next;
+	}
+	return (0);
+}
+
 double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
 {
 	t_ray	contact;
 	t_vec	normal;
 	t_sphere *sphere;
 	double	ratio;
-	static int i;
+	t_vec	check;
 
 	sphere = ob->object;
 	contact.orig = at(r,t);
@@ -343,6 +382,21 @@ double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
 	ob->color = sphere->color;
 	ob->ratio = ratio;
 	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
+	t = hit_something(set, contact);
+	if (t > 0)
+	{
+		check = at(contact, t);
+		if (set->light.location.x > contact.orig.x)
+		{
+			if (contact.orig.x < check.x && check.x < set->light.location.x)
+				ob->ratio = 0;
+		}
+		else
+		{
+			if (set->light.location.x < check.x && check.x < contact.orig.x)
+				ob->ratio = 0;
+		}
+	}
 	return (ratio);
 }
 
@@ -351,6 +405,7 @@ double	ratio_pl(t_ray r, double t, t_object *ob, t_set *set)
 	t_ray	contact;
 	t_vec	normal;
 	double	ratio;
+	t_vec	check;
 	t_plane *pl;
 
 	pl = ob->object;
@@ -360,6 +415,24 @@ double	ratio_pl(t_ray r, double t, t_object *ob, t_set *set)
 	ob->color = pl->color;
 	ob->ratio = ratio;
 	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
+	contact.orig.x += contact.dir.x;
+	contact.orig.y += contact.dir.y;
+	contact.orig.z += contact.dir.z;
+	t = hit_something(set, contact);
+	if (t > 0)
+	{
+		check = at(contact, t);
+		if (set->light.location.x > contact.orig.x)
+		{
+			if (contact.orig.x < check.x && check.x < set->light.location.x)
+				ob->ratio = 0;
+		}
+		else
+		{
+			if (set->light.location.x < check.x && check.x < contact.orig.x)
+				ob->ratio = 0;
+		}
+	}
 	return (ratio);
 }
 
@@ -428,6 +501,8 @@ int	ray_color(t_ray r, t_set *set)
 		}
 		ob = ob->next;
 	}
+	if (length == 184467440737095516)
+		return (0);
 	return (set_color(color, ratio, 0.2));
 }
 

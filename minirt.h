@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/05/04 12:35:05 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/09 14:39:08 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,8 @@ typedef struct s_object
 	int				type;
 	double			ratio;
 	double			length;
+	double			length2;
+	double			check;
 	t_vec			color;
 	void			*object;
 	struct s_object	*next;

@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/08 15:58:36 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/09 16:11:47 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,11 +199,11 @@ t_vec	set_lower_left_corner(t_camera *camera)
 	t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
 	vertical = v_mul_n(vertical, t);
 	camera->ver = vertical;
-	if (z_axis.x == 0 && z_axis.y == 0 && (z_axis.z =! 0))
+	if (z_axis.x == 0 && z_axis.y == 0)
 	{
 		horizontal = make_vec(1, 0, 0);
 		t = sqrt(pow(camera->fov, 2) / dot(horizontal, horizontal));
-		horizontal = v_mul_n(horizontal, t);
+		horizontal = v_mul_n(horizontal, t * 1200 / 800);
 		camera->hor = horizontal;
 		vertical = make_vec(0, 1, 0);
 		t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
@@ -336,6 +336,8 @@ int	hit_something(t_set *set, t_ray contact)
 	t_object	*ob;
 	t_plane		*pl;
 	double		t;
+	double		length;
+	t_vec		near;
 
 	ob = set->objects;
 	while (ob)
@@ -344,10 +346,14 @@ int	hit_something(t_set *set, t_ray contact)
 		{
 			sp = ob->object;
 			t = hit_sphere(sp, contact);
-			if (t != -1)
+			if (t > 0)
 			{
-				return (t);
+				ob->check = t;
+				near = at(contact, t);
+				ob ->length2 = length_squared(near);
 			}
+			else
+				ob->length2 = 184467440737095516;
 		}
 		else if (ob->type == 1)
 		{
@@ -359,11 +365,38 @@ int	hit_something(t_set *set, t_ray contact)
 			pl = ob->object;
 			t = hit_plane(pl, contact);
 			if (t > 0)
-				return (t);
+			{
+				ob->check = t;
+				near = at(contact, t);
+				ob ->length2 = length_squared(near);
+			}
+			else
+				ob->length2 = 184467440737095516;
 		}
 		ob = ob->next;
 	}
-	return (0);
+	length = -1;
+	ob = set->objects;
+	while (ob)
+	{
+		if (length == -1)
+		{
+			length = ob->length2;
+			t = ob->check;
+		}
+		else
+		{
+			if (length > ob->length2)
+			{
+				t = ob->check;
+				length = ob->length2;
+			}
+		}
+		ob = ob->next;
+	}
+	if (length == 184467440737095516)
+		return (0);
+	return (t);
 }
 
 double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
@@ -383,17 +416,17 @@ double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
 	ob->ratio = ratio;
 	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
 	t = hit_something(set, contact);
-	if (t > 0)
+	if (t != 0)
 	{
 		check = at(contact, t);
-		if (set->light.location.x > contact.orig.x)
+		if (set->light.location.y > contact.orig.y)
 		{
-			if (contact.orig.x < check.x && check.x < set->light.location.x)
+			if (contact.orig.y < check.y && check.y < set->light.location.y)
 				ob->ratio = 0;
 		}
 		else
 		{
-			if (set->light.location.x < check.x && check.x < contact.orig.x)
+			if (set->light.location.y < check.y && check.y < contact.orig.y)
 				ob->ratio = 0;
 		}
 	}

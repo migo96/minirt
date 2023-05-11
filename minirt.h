@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/05/09 14:39:08 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/11 14:03:07 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,7 @@ typedef struct s_object
 	double			ratio;
 	double			length;
 	double			length2;
+	double			hit_part;
 	double			check;
 	t_vec			color;
 	void			*object;
@@ -114,10 +115,10 @@ t_vec	v_add(t_vec v1, t_vec v2);
 t_vec	v_div_n(t_vec v1, float n);
 t_vec	cross(t_vec v1, t_vec v2);
 double	degrees_to_radians(double degrees);
-float	dot(t_vec v1, t_vec v2);
-float	length_squared(t_vec e);
+double	dot(t_vec v1, t_vec v2);
+double	length_squared(t_vec e);
 t_vec	at(t_ray r, double t);
 t_vec	unit_vector(t_vec v);
-float	length(t_vec e);
+double	length(t_vec e);
 
 #endif

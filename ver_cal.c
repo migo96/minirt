@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 13:27:24 by migo              #+#    #+#             */
-/*   Updated: 2023/04/24 17:28:03 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/10 15:15:50 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,12 +70,12 @@ t_vec	v_div_n(t_vec v1, float n)
 	result.z = v1.z / n;
 	return (result);
 }
-float	dot(t_vec v1, t_vec v2)
+double	dot(t_vec v1, t_vec v2)
 {
 	return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
 }
 
-float	length_squared(t_vec e)
+double	length_squared(t_vec e)
 {
 	return (e.x * e.x + e.y * e.y + e.z * e.z);
 }
@@ -99,7 +99,7 @@ t_vec	at(t_ray r, double t)
 	return (v_add(r.orig, v_mul_n(r.dir, t)));
 }
 
-float	length(t_vec e)
+double	length(t_vec e)
 {
 	return (sqrt(length_squared(e)));
 }

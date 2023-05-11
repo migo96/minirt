@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/09 16:11:47 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/11 15:39:48 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,7 @@ t_cylinder	*set_cylinder(char *map)
 	map = map + 2;
 	cy = malloc(sizeof(t_cylinder) * 1);
 	cy->center = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
-	cy->normal = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	cy->normal = unit_vector(make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map)));
 	cy->radius = ft_atof(&map);
 	cy->height = ft_atof(&map);
 	cy->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
@@ -257,37 +257,68 @@ double	hit_sphere(t_sphere *s, t_ray r)
 		return ((- half_b - sqrt(discriminant)) / a);
 }
 
-double	hit_cylinder(t_cylinder *cy, t_ray r)
+int      hit_cylinder_cap(t_cylinder *cy, t_object *ob, t_ray ray, double *t)
 {
-	t_vec	oc;
-	double	a;
-	double	half_b;
-	double	c;
-	double	discriminant;
-
-	oc = v_sub(r.orig, cy->center);
-	a = length_squared(cross(r.dir, cy->normal));
-	half_b = dot(cross(r.dir, cy->normal), cross(oc, cy->normal));
-	c = length_squared(cross(oc, cy->normal)) - pow(cy->radius, 2);
-	discriminant = half_b * half_b - a * c;
-	if (discriminant < 0)
-		return (-1.0);
-	else
-		return (- half_b - sqrt(discriminant) / a);
+    t_vec   center[2];
+    double  coefficient;
+    double  constant[2];
+    double  ts[2];
+    ray.dir = unit_vector(ray.dir);
+    coefficient = dot(ray.dir, cy->normal);
+    if (coefficient == 0)
+        return (0);
+    center[0] = v_add(cy->center, v_mul_n(cy->normal, cy->height / 2));
+    constant[0] = dot(cy->normal, v_sub(center[0], ray.orig));
+    ts[0] = constant[0] / coefficient;
+    if (cy->radius >= length(v_sub(center[0], at(ray, ts[0]))))
+	{
+		ob->hit_part = 1;
+        return (*t = constant[0] / coefficient);
+	}
+    center[1] = v_add(cy->center, v_mul_n(cy->normal, -cy->height / 2));
+    constant[1] = dot(cy->normal, v_sub(center[1], ray.orig));
+    ts[1] = constant[1] / coefficient;
+    if (cy->radius >= length(v_sub(center[1], at(ray, ts[1]))))
+	{
+		ob->hit_part = 2;
+        return (*t = constant[1] / coefficient);
+	}
+    return (0);
 }
-
-int      hit_cylinder_cap(t_cylinder *cy, t_ray ray)
+double  hit_cylinder(t_cylinder *cy, t_object *ob, t_ray r)
 {
-	t_vec    circle_center;
-    float 	root;
-    float 	diameter;
-
-	circle_center = v_add(cy->center, v_mul_n(cy->normal, cy->height));
-	root = dot(v_sub(circle_center, ray.dir), cy->normal);
-	diameter = length(v_sub(circle_center, at(ray, root)));
-	if (fabs(cy->radius) < fabs(diameter))
-		return (0);
-    return (1);
+    t_vec   oc;
+    double  a;
+    double  half_b;
+    double  c;
+    double  discriminant;
+    double  t;
+    r.dir = unit_vector(r.dir);
+    oc = v_sub(r.orig, cy->center);
+    a = pow(dot(r.dir, cy->normal), 2) - 1;
+    half_b =  dot(oc, cy->normal) * dot(r.dir, cy->normal) - dot(oc, r.dir);
+    c = cy->radius * cy->radius - dot(oc, oc) +  pow(dot(oc, cy->normal), 2);
+	a *= -1;
+	half_b *= -1;
+	c *= -1;
+	// a = length_squared(cross(r.dir, cy->normal));
+	// half_b = dot(cross(r.dir, cy->normal), cross(oc, cy->normal));
+	// c = length_squared(cross(oc, cy->normal)) - pow(cy->radius, 2);
+	// printf("%f %f %f\n", a, half_b, c);
+	// a = (pow(dot(r.dir, cy->normal), 2) - dot(r.dir, r.dir)) * -1;
+	// half_b =  (dot(oc, cy->normal) * dot(r.dir, cy->normal) - dot(oc, r.dir)) * -1;
+	// c = (pow(dot(oc, cy->normal), 2) - dot(oc, oc) + cy->radius * cy->radius) * -1;
+	// printf("%f %f %f\n", a, half_b, c);
+    discriminant = half_b * half_b - a * c;
+    t = (- half_b - sqrt(discriminant)) / a;
+    if ((discriminant < 0 \
+    || fabs(dot(v_sub(cy->center, at(r, t)), cy->normal)) > cy->height / 2\
+    && !hit_cylinder_cap(cy, ob, r, &t)))
+        return (-1.0);
+    else
+    {
+        return (t);
+    }
 }
 
 int	cy_boundary(t_cylinder *cy, t_vec contact)
@@ -296,13 +327,13 @@ int	cy_boundary(t_cylinder *cy, t_vec contact)
 	double	max_height;
 
 	hit_height = dot(v_sub(contact, cy->center), cy->normal);
-	max_height = cy->height / 2;
+	max_height = cy->height;
 	if (fabs(hit_height) > max_height)
 		return (0);
 	return (1);
 }
 
-int	set_color(t_vec ob_color, double ratio, double light)
+int	set_color(t_vec ob_color, double ratio, double light, double power)
 {
 	int	color_red;
 	int color_green;
@@ -312,7 +343,7 @@ int	set_color(t_vec ob_color, double ratio, double light)
 
 	if (ratio < 0)
 		ratio = 0;
-	ratio1 = ratio + light;
+	ratio1 = (ratio + light) * power;
 	if (ratio1 < 1)
 	{
 		color_red = (int)(ob_color.x * ratio1);
@@ -325,7 +356,7 @@ int	set_color(t_vec ob_color, double ratio, double light)
 		color_green = (int)(ob_color.y * (2 - ratio1) + 255 * (ratio1 - 1));
 		color_blue = (int)(ob_color.z * (2 - ratio1) + 255 * (ratio1 - 1));
 	}
-	color = color_red * 65536 + color_green * 256 + color_blue;
+	color = (color_red * 65536 + color_green * 256 + color_blue);
 	return (color);
 }
 
@@ -358,7 +389,8 @@ int	hit_something(t_set *set, t_ray contact)
 		else if (ob->type == 1)
 		{
 			cy = ob->object;
-			return (1);
+			ob->length2 = 184467440737095516;
+			ob->check = 1;
 		}
 		else if (ob->type == 2)
 		{
@@ -397,6 +429,50 @@ int	hit_something(t_set *set, t_ray contact)
 	if (length == 184467440737095516)
 		return (0);
 	return (t);
+}
+
+double  ratio_cy(t_ray r, double t, t_object *ob, t_set *set)
+{
+    t_ray       contact;
+    t_vec       normal;
+    t_vec       center_vec;
+    t_cylinder  *cylinder;
+    double      ratio;
+	
+    cylinder = ob->object;
+	if (ob->hit_part == 0)
+	{
+    	contact.orig = at(r,t);
+    	center_vec = v_add(cylinder->center, \
+    	v_mul_n(cylinder->normal, dot(v_sub(cylinder->center, contact.orig), cylinder->normal)));
+    	normal = unit_vector(v_sub(contact.orig, center_vec));
+    	contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
+    	ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
+    	ob->color = cylinder->color;
+    	ob->ratio = ratio;
+    	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
+	}
+	else if (ob->hit_part == 1)
+	{
+		contact.orig = at(r,t);
+		contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
+		ratio = dot(contact.dir, cylinder->normal) / length(cylinder->normal) * length(contact.dir);
+		ob->color = cylinder->color;
+		ob->ratio = ratio;
+		ob->length = length_squared(v_sub(set->camera.location, contact.orig));
+
+	}
+	else
+	{
+		contact.orig = at(r,t);
+		contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
+		normal = v_mul_n(cylinder->normal, -1);
+		ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
+		ob->color = cylinder->color;
+		ob->ratio = ratio;
+		ob->length = length_squared(v_sub(set->camera.location, contact.orig));
+	}
+    return (ratio);
 }
 
 double	ratio_sp(t_ray r, double t, t_object *ob, t_set *set)
@@ -477,6 +553,7 @@ int	ray_color(t_ray r, t_set *set)
 	t_object	*ob;
 	t_plane		*pl;
 	t_vec		color;
+	t_vec		contact;
 	double		ratio;
 	double		length;
 
@@ -495,9 +572,13 @@ int	ray_color(t_ray r, t_set *set)
 		else if (ob->type == 1)
 		{
 			cy = ob->object;
-			t = hit_cylinder(cy, r);
-			if (t > 0)
-				return (set_color(cy->color, 0, 0.2));
+			ob->hit_part = 0;
+			t = hit_cylinder(cy, ob, r);
+			ob->length = 184467440737095516;
+			if (t != -1)
+			{
+				ratio_cy(r, t, ob ,set);
+			}
 		}
 		else if (ob->type == 2)
 		{
@@ -536,7 +617,7 @@ int	ray_color(t_ray r, t_set *set)
 	}
 	if (length == 184467440737095516)
 		return (0);
-	return (set_color(color, ratio, 0.2));
+	return (set_color(color, ratio, 0.2, set->light.power));
 }
 
 void	render(t_data *data, t_set *set, double height, double width)

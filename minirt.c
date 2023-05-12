@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:53:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/11 15:39:48 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/12 13:13:20 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,11 +203,11 @@ t_vec	set_lower_left_corner(t_camera *camera)
 	{
 		horizontal = make_vec(1, 0, 0);
 		t = sqrt(pow(camera->fov, 2) / dot(horizontal, horizontal));
-		horizontal = v_mul_n(horizontal, t * 1200 / 800);
+		horizontal = v_mul_n(horizontal, t);
 		camera->hor = horizontal;
 		vertical = make_vec(0, 1, 0);
 		t = sqrt(pow(camera->fov, 2) / dot(vertical, vertical));
-		vertical = v_mul_n(vertical, t);
+		vertical = v_mul_n(vertical, t * 800 / 1200);
 		camera->ver = vertical;
 	}
 	return (v_sub(camera->location, v_add(v_add(v_div_n(horizontal, 2),
@@ -263,27 +263,33 @@ int      hit_cylinder_cap(t_cylinder *cy, t_object *ob, t_ray ray, double *t)
     double  coefficient;
     double  constant[2];
     double  ts[2];
-    ray.dir = unit_vector(ray.dir);
+	
     coefficient = dot(ray.dir, cy->normal);
     if (coefficient == 0)
         return (0);
     center[0] = v_add(cy->center, v_mul_n(cy->normal, cy->height / 2));
     constant[0] = dot(cy->normal, v_sub(center[0], ray.orig));
     ts[0] = constant[0] / coefficient;
-    if (cy->radius >= length(v_sub(center[0], at(ray, ts[0]))))
-	{
-		ob->hit_part = 1;
-        return (*t = constant[0] / coefficient);
-	}
-    center[1] = v_add(cy->center, v_mul_n(cy->normal, -cy->height / 2));
+	center[1] = v_add(cy->center, v_mul_n(cy->normal, -cy->height / 2));
     constant[1] = dot(cy->normal, v_sub(center[1], ray.orig));
     ts[1] = constant[1] / coefficient;
-    if (cy->radius >= length(v_sub(center[1], at(ray, ts[1]))))
+	if (length(v_sub(ray.orig, at(ray, ts[0]))) < length(v_sub(ray.orig, at(ray, ts[1]))))
 	{
-		ob->hit_part = 2;
-        return (*t = constant[1] / coefficient);
+    	if (cy->radius >= length(v_sub(center[0], at(ray, ts[0]))))
+		{
+			ob->hit_part = 1;
+    	    return (*t = constant[0] / coefficient);
+		}
 	}
-    return (0);
+	else
+	{
+    	if (cy->radius >= length(v_sub(center[1], at(ray, ts[1]))))
+		{
+			ob->hit_part = 2;
+    	    return (*t = constant[1] / coefficient);
+		}
+	}
+	return (0);
 }
 double  hit_cylinder(t_cylinder *cy, t_object *ob, t_ray r)
 {
@@ -389,8 +395,15 @@ int	hit_something(t_set *set, t_ray contact)
 		else if (ob->type == 1)
 		{
 			cy = ob->object;
-			ob->length2 = 184467440737095516;
-			ob->check = 1;
+			t = hit_cylinder(cy, ob, contact);
+			if (t > 0)
+			{
+				ob->check = t;
+				near = at(contact, t);
+				ob ->length2 = length_squared(near);
+			}
+			else
+				ob->length2 = 184467440737095516;
 		}
 		else if (ob->type == 2)
 		{
@@ -438,18 +451,24 @@ double  ratio_cy(t_ray r, double t, t_object *ob, t_set *set)
     t_vec       center_vec;
     t_cylinder  *cylinder;
     double      ratio;
+	t_vec		check;
 	
     cylinder = ob->object;
+	r.dir = unit_vector(r.dir);
 	if (ob->hit_part == 0)
 	{
     	contact.orig = at(r,t);
+		printf("r.dir %f %f %f\n", r.dir.x, r.dir.y, r.dir.z);
+		printf("r.orig %f %f %f\n", r.orig.x, r.orig.y, r.orig.z);
+		printf("t %f\n", t);
     	center_vec = v_add(cylinder->center, \
-    	v_mul_n(cylinder->normal, dot(v_sub(cylinder->center, contact.orig), cylinder->normal)));
+    	v_mul_n(cylinder->normal, dot(v_sub(contact.orig, cylinder->center), cylinder->normal)));
     	normal = unit_vector(v_sub(contact.orig, center_vec));
     	contact.dir = unit_vector(v_sub(set->light.location, contact.orig));
     	ratio = dot(contact.dir, normal) / length(normal) * length(contact.dir);
     	ob->color = cylinder->color;
     	ob->ratio = ratio;
+		printf("!!!!%f %f %f\n", contact.orig.x, contact.orig.y, contact.orig.z);
     	ob->length = length_squared(v_sub(set->camera.location, contact.orig));
 	}
 	else if (ob->hit_part == 1)
@@ -472,6 +491,25 @@ double  ratio_cy(t_ray r, double t, t_object *ob, t_set *set)
 		ob->ratio = ratio;
 		ob->length = length_squared(v_sub(set->camera.location, contact.orig));
 	}
+	// printf("@@%f %f %f\n", contact.orig.x ,contact.orig.y, contact.orig.z);
+	// contact.orig.x += contact.dir.x;
+	// contact.orig.y += contact.dir.y;
+	// contact.orig.z += contact.dir.z;
+	// t = hit_something(set, contact);
+	// if (t != 0)
+	// {
+	// 	check = at(contact, t);
+	// 	if (set->light.location.y > contact.orig.y)
+	// 	{
+	// 		if (contact.orig.y < check.y && check.y < set->light.location.y)
+	// 			ob->ratio = 0;
+	// 	}
+	// 	else
+	// 	{
+	// 		if (set->light.location.y < check.y && check.y < contact.orig.y)
+	// 			ob->ratio = 0;
+	// 	}
+	// }
     return (ratio);
 }
 

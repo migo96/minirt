@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:01:10 by migo              #+#    #+#             */
-/*   Updated: 2023/05/23 17:11:43 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/26 15:08:37 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ double	hit_plane(t_object *ob, t_ray r)
 
 	pl = (t_plane *) ob->object;
 	ob->refl = pl->refl;
+	ob->refr = pl->refr;
+	ob->tran = pl->tran;
 	coefficient = r.dir.x * pl->normal.x \
 				+ r.dir.y * pl->normal.y \
 				+ r.dir.z * pl->normal.z;
@@ -41,6 +43,8 @@ double	hit_sphere(t_object *ob, t_ray r)
 
 	s = (t_sphere *) ob->object;
 	ob->refl = s->refl;
+	ob->refr = s->refr;
+	ob->tran = s->tran;
 	oc = v_sub(r.orig, s->center);
 	coe[0] = length_squared(r.dir);
 	coe[1] = dot(oc, r.dir);
@@ -67,6 +71,8 @@ double	hit_cylinder(t_object *ob, t_ray r)
 
 	cy = (t_cylinder *) ob->object;
 	ob->refl = cy->refl;
+	ob->refr = cy->refr;
+	ob->tran = cy->tran;
 	r.dir = unit_vector(r.dir);
 	oc = v_sub(r.orig, cy->center);
 	coe[0] = -(pow(dot(r.dir, cy->normal), 2) - 1);

@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:20:24 by migo              #+#    #+#             */
-/*   Updated: 2023/05/23 17:35:45 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/26 15:07:45 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ t_sphere	*set_sphere(char *map, t_object *ob)
 	sphere->radius = ft_atof(&map);
 	sphere->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
 	sphere->refl = ft_atof(&map);
+	sphere->refr = ft_atof(&map);
+	sphere->tran = ft_atof(&map);
 	check_color(sphere->color);
 	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
 		map++;
@@ -52,6 +54,8 @@ t_plane	*set_plane(char *map, t_object *ob)
 	plane->normal = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
 	plane->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
 	plane->refl = ft_atof(&map);
+	plane->refr = ft_atof(&map);
+	plane->tran = ft_atof(&map);
 	check_viewpoint(plane->normal);
 	check_color(plane->color);
 	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
@@ -82,6 +86,8 @@ t_cylinder	*set_cylinder(char *map, t_object *ob)
 	cy->normal = unit_vector(cy->normal);
 	check_color(cy->color);
 	cy->refl = ft_atof(&map);
+	cy->refr = ft_atof(&map);
+	cy->tran = ft_atof(&map);
 	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
 		map++;
 	if (map[0] != '\0')

@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/05/24 14:38:54 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/26 17:15:16 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,8 @@ typedef struct s_sphere
 	t_vec	center;
 	double	radius;
 	double	refl;
+	double	refr;
+	double	tran;
 	t_vec	color;
 }		t_sphere;
 
@@ -65,6 +67,8 @@ typedef struct s_plane
 	t_vec	center;
 	t_vec	normal;
 	double	refl;
+	double	refr;
+	double	tran;
 	t_vec	color;
 }		t_plane;
 
@@ -75,6 +79,8 @@ typedef struct s_cylinder
 	double	height;
 	double	radius;
 	double	refl;
+	double	refr;
+	double	tran;
 	t_vec	top;
 	t_vec	botton;
 	t_vec	h;
@@ -113,6 +119,8 @@ typedef struct s_object
 	void			(*ratio_f)(t_ray, double, struct s_object*, struct s_set*);
 	int				rank;
 	double			refl;
+	double			refr;
+	double			tran;
 	struct s_object	*next;
 }		t_object;
 
@@ -185,5 +193,7 @@ void		set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con);
 
 void		rt_hook(t_data *img);
 int			rt_close(void *param);
+
+int			check_in_sp(t_sphere *sphere, t_set *set, t_ray contact);
 
 #endif

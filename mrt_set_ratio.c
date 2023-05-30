@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:08:11 by migo              #+#    #+#             */
-/*   Updated: 2023/05/16 14:24:02 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/30 15:08:08 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ int	check_in_cy(t_cylinder *cy, t_set *set, t_vec normal)
 	return (0);
 }
 
-void	hit_range(t_object *ob, t_set *set, t_ray contact, double t)
+void	hit_range(t_set *set, t_ray contact, double t,t_object *ob)
 {
 	t_vec	check;
 
@@ -44,12 +44,14 @@ void	hit_range(t_object *ob, t_set *set, t_ray contact, double t)
 		if (set->light.loc.x > contact.orig.x)
 		{
 			if (contact.orig.x < check.x && check.x < set->light.loc.x)
-				ob->ratio = 0;
+			{
+				ob->ratio *= 0 + ob->tran;
+			}
 		}
 		else
 		{
 			if (set->light.loc.x < check.x && check.x < contact.orig.x)
-				ob->ratio = 0;
+				ob->ratio *= 0 + ob->tran;
 		}
 	}
 }

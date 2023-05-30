@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 13:42:57 by dmin              #+#    #+#             */
-/*   Updated: 2023/05/17 13:17:53 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/30 15:00:32 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ int	hit_something(t_set *set, t_ray contact, t_object *obj)
 	double		near_t;
 	double		length;
 	double		near_length;
+	double		tran;
 
 	near_length = 184467440737095516;
 	ob = set->objects;
@@ -31,11 +32,13 @@ int	hit_something(t_set *set, t_ray contact, t_object *obj)
 		if (t > 0 && near_length > length)
 		{
 			near_t = t;
+			tran = ob->tran;
 			near_length = length;
 		}
 		ob = ob->next;
 	}
 	if (near_length == 184467440737095516)
 		return (0);
+	obj->tran = tran;
 	return (near_t);
 }

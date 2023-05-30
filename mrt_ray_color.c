@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:29:38 by migo              #+#    #+#             */
-/*   Updated: 2023/05/26 17:17:30 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/30 14:33:11 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,10 +60,11 @@ t_ray	refract_color(t_ray r, double t, t_object *ob, t_set *set)
 	cos = dot(normal, v_mul_n(ray, -1)) / (length(normal) * length(ray));
 	sin = sqrt(1 - pow(cos, 2));
 	sin = sin * ob->refr;
-	if (sin > 1)
-		return (contact);
 	A = v_mul_n(unit_vector(v_sub(contact.orig, v_sub(r.orig, v_mul_n(normal, dot(ray, normal))))), sin);
-	B = v_mul_n(normal, -1 * sqrt(1 - pow(sin, 2)));
+	if (sin > 1)
+		B = normal;
+	else
+		B = v_mul_n(normal, -1 * sqrt(1 - pow(sin, 2)));
 	contact.dir = unit_vector(v_add(A, B));
 	contact.orig = v_add(contact.orig, contact.dir);
 	return (contact);
@@ -204,6 +205,7 @@ t_vec	ray_color(t_ray r, t_set *set, int i, t_object *check)
 		else
 		{
 			color1 = v_mul_n(color1, (1 - refl) * 1 -tran);
+			set->am_light.am_light = 0;
 			color3 = ray_color2(check1, set, near, tran);
 		}
 		set->light.power *= refl;

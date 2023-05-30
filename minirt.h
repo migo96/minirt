@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/05/26 17:15:16 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/30 14:55:08 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,7 +188,7 @@ void		ratio_cy(t_ray r, double t, t_object *ob, t_set *set);
 void		ratio_sp(t_ray r, double t, t_object *ob, t_set *set);
 void		ratio_pl(t_ray r, double t, t_object *ob, t_set *set);
 
-void		hit_range(t_object *ob, t_set *set, t_ray contact, double t);
+void		hit_range(t_set *set, t_ray contact, double t, t_object *ob);
 void		set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con);
 
 void		rt_hook(t_data *img);

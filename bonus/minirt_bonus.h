@@ -1,17 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   minirt.h                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/04/24 11:54:18 by migo              #+#    #+#             */
-/*   Updated: 2023/05/30 14:55:08 by migo             ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#ifndef MINIRT_H
-# define MINIRT_H
+#ifndef MINIRT_BONUS_H
+# define MINIRT_BONUS_H
 
 # include <stdio.h>
 # include <fcntl.h>
@@ -19,11 +7,14 @@
 # include <unistd.h>
 # include <math.h>
 # include "mlx.h"
-# include "get_next_line.h"
+# include "get_next_line_bonus.h"
 
 # define SPHERE 0
 # define CYLINDER 1
 # define PLANE 2
+# define CONE 3
+# define HYPER 4
+
 # define WIDTH 1200
 # define HEIGHT 800
 
@@ -36,8 +27,9 @@ typedef struct s_vec
 
 typedef struct s_light
 {
-	t_vec	loc;
-	double	power;
+	t_vec			loc;
+	double			power;
+	struct s_light	*next;
 }		t_light;
 
 typedef struct s_ray
@@ -45,6 +37,46 @@ typedef struct s_ray
 	t_vec	orig;
 	t_vec	dir;
 }		t_ray;
+
+typedef struct s_cone
+{
+	t_vec	center;
+	t_vec	normal;
+	double	height;
+	double	radius;
+	t_vec	color;
+}		t_cone;
+
+typedef struct s_circle
+{
+	t_vec	center;
+	t_vec	normal;
+	double	height;
+	double	radius;
+	double	refl;
+	double	refr;
+	double	tran;
+	t_vec	color;
+}		t_circle;
+
+typedef struct s_hyper
+{
+	t_vec	center;
+	t_vec	normal;
+	double	a;
+	double	b;
+	double	c;
+	double	height;
+	t_vec	color;
+}		t_hyper;
+
+typedef struct s_checker
+{
+	int		width;
+	int		height;
+	t_vec	color_a;
+	t_vec	color_b;
+}		t_checker;
 
 typedef struct s_sphere
 {
@@ -61,6 +93,14 @@ typedef struct s_am_light
 	double	am_light;
 	t_vec	color;
 }		t_am_light;
+
+typedef struct  s_img {
+	void	*img;
+	char	*addr;
+	int		bits_per_pixel;
+	int		line_length;
+	int		endian;
+}		t_img;
 
 typedef struct s_plane
 {
@@ -81,9 +121,6 @@ typedef struct s_cylinder
 	double	refl;
 	double	refr;
 	double	tran;
-	t_vec	top;
-	t_vec	botton;
-	t_vec	h;
 	t_vec	color;
 }		t_cylinder;
 
@@ -100,9 +137,10 @@ typedef struct s_cam
 typedef struct s_set
 {
 	t_cam			cam;
-	t_light			light;
 	t_am_light		am_light;
+	struct s_light	*light;
 	struct s_object	*objects;
+	struct s_data	*img2;
 }		t_set;
 
 typedef struct s_object
@@ -110,17 +148,15 @@ typedef struct s_object
 	int				type;
 	double			ratio;
 	double			length;
-	double			length2;
 	double			hit_part;
-	double			check;
 	t_vec			color;
 	void			*object;
 	double			(*hit_f)(struct s_object*, t_ray);
 	void			(*ratio_f)(t_ray, double, struct s_object*, struct s_set*);
-	int				rank;
 	double			refl;
 	double			refr;
 	double			tran;
+	int				rank;
 	struct s_object	*next;
 }		t_object;
 
@@ -153,17 +189,22 @@ t_vec		v_add_n(t_vec v1, double n);
 int			fl_color(t_vec color);
 
 t_object	*ft_lstnew(int nb, char *map);
+t_light		*l_lstnew(char *map);
+void		l_lstadd_front(t_light **lst, t_light *new);
 void		ft_lstadd_front(t_object **lst, t_object *new);
 void		ft_lstclear(t_object **lst);
+void		l_lstclear(t_light **lst);
 
 int			is_file_name_ok(char *filename);
 double		skip_space_comma(char **map);
 double		ft_atof(char **map);
 void		checkmap(char **argv, t_set	*set);
 void		my_mlx_pixel_put(t_data *data, int x, int y, int color);
+int			gain_color(t_data *data, int x, int y);
 
 t_vec		set_color(t_vec ob_color, double ratio, t_am_light am);
-t_vec		ray_color(t_ray r, t_set *set, int i, t_object *check);
+t_vec		ray_color(t_ray r, t_set *set, double light_power, t_object *check);
+int			re_color(t_ray r, t_set *set);
 
 void		check_color(t_vec color);
 void		check_viewpoint(t_vec vec);
@@ -182,18 +223,32 @@ double		hit_sphere(t_object *ob, t_ray r);
 double		hit_cylinder(t_object *ob, t_ray r);
 int			hit_cylinder_cap(t_cylinder *cy, t_object *ob, \
 			t_ray ray, double *t);
-int			hit_something(t_set *set, t_ray contact, t_object *obj);
+void		hit_something(t_set *set, t_ray contact, t_object *obj);
+int			close_cylinder_cap(t_ray ray, double result1, double result2);
 
 void		ratio_cy(t_ray r, double t, t_object *ob, t_set *set);
 void		ratio_sp(t_ray r, double t, t_object *ob, t_set *set);
 void		ratio_pl(t_ray r, double t, t_object *ob, t_set *set);
+void		ratio_cir(t_ray r, double t, t_object *ob, t_set *set);
 
-void		hit_range(t_set *set, t_ray contact, double t, t_object *ob);
+void		hit_range(t_object *ob, t_set *set, t_ray contact, double t);
 void		set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con);
 
 void		rt_hook(t_data *img);
 int			rt_close(void *param);
 
-int			check_in_sp(t_sphere *sphere, t_set *set, t_ray contact);
+t_circle	*set_circle(char *map, t_object *ob, int nb);
+t_cone		*set_cone(char *map, t_object *ob);
+t_hyper		*set_hyper(char *map, t_object *ob);
+
+double		hit_circle(t_object *ob, t_ray r);
+double		hit_hyper(t_object *ob, t_ray r);
+double		hit_cone(t_object *ob, t_ray r);			
+
+void		ratio_cn(t_ray r, double t, t_object *ob, t_set *set);
+void		ratio_hy(t_ray r, double t, t_object *ob, t_set *set);
+
+void		set_obj_bo(t_object *ob, t_set *set, t_vec normal, t_ray con);
+void		classification_map_bo(char *map, int i, t_set *set);
 
 #endif

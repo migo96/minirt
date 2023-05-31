@@ -1,16 +1,72 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   mrt_set_obj.c                                      :+:      :+:    :+:   */
+/*   mrt_set_obj_bonus.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:20:24 by migo              #+#    #+#             */
-/*   Updated: 2023/05/26 15:07:45 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/31 15:38:39 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minirt.h"
+#include "minirt_bonus.h"
+
+t_cone	*set_cone(char *map, t_object *ob)
+{
+	t_cone	*cn;
+
+	ob->hit_f = hit_cone;
+	ob->ratio_f = ratio_cn;
+	map = map + 2;
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	cn = malloc(sizeof(t_cone) * 1);
+	if (!cn)
+		exit(printf("malloc error\n"));
+	cn->center = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	cn->normal = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	cn->radius = ft_atof(&map);
+	cn->height = ft_atof(&map);
+	cn->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	check_viewpoint(cn->normal);
+	cn->normal = unit_vector(cn->normal);
+	check_color(cn->color);
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	if (map[0] != '\0')
+		exit(printf("%c is wrong parameter\n", map[0]));
+	return (cn);
+}
+
+t_hyper	*set_hyper(char *map, t_object *ob)
+{
+	t_hyper	*hy;
+
+	ob->hit_f = hit_hyper;
+	ob->ratio_f = ratio_hy;
+	map = map + 2;
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	hy = malloc(sizeof(t_hyper) * 1);
+	if (!hy)
+		exit(printf("malloc error\n"));
+	hy->center = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	hy->normal = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	hy->a = ft_atof(&map);
+	hy->b = ft_atof(&map);
+	hy->c = ft_atof(&map);
+	hy->height = ft_atof(&map);
+	hy->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	check_viewpoint(hy->normal);
+	hy->normal = unit_vector(hy->normal);
+	check_color(hy->color);
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	if (map[0] != '\0')
+		exit(printf("%c is wrong parameter\n", map[0]));
+	return (hy);
+}
 
 t_sphere	*set_sphere(char *map, t_object *ob)
 {
@@ -93,4 +149,41 @@ t_cylinder	*set_cylinder(char *map, t_object *ob)
 	if (map[0] != '\0')
 		exit(printf("%c is wrong parameter\n", map[0]));
 	return (cy);
+}
+
+t_circle	*set_circle(char *map, t_object *ob, int nb)
+{
+	t_circle	*cir;
+
+	ob->hit_f = hit_circle;
+	ob->ratio_f = ratio_cir;
+	map = map + 2;
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	cir = malloc(sizeof(t_cylinder) * 1);
+	if (!cir)
+		exit(printf("malloc error\n"));
+	cir->center = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	cir->normal = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	cir->radius = ft_atof(&map);
+	cir->height = ft_atof(&map);
+	cir->color = make_vec(ft_atof(&map), ft_atof(&map), ft_atof(&map));
+	check_viewpoint(cir->normal);
+	cir->normal = unit_vector(cir->normal);
+	if (nb == 5)
+		cir->center = v_add(cir->center, v_mul_n(cir->normal, cir->height / 2));
+	else if (nb == 6)
+	{
+		cir->normal = v_mul_n(cir->normal, -1);
+		cir->center = v_add(cir->center, v_mul_n(cir->normal, cir->height / 2));
+	}
+	check_color(cir->color);
+	cir->refl = ft_atof(&map);
+	cir->refr = ft_atof(&map);
+	cir->tran = ft_atof(&map);
+	while (map[0] == ' ' || (map[0] >= 9 && map[0] <= 13))
+		map++;
+	if (map[0] != '\0')
+		exit(printf("%c is wrong parameter\n", map[0]));
+	return (cir);
 }

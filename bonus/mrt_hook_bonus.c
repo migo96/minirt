@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   mrt_hook.c                                         :+:      :+:    :+:   */
+/*   mrt_hook_bonus.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/18 15:58:32 by dmin              #+#    #+#             */
-/*   Updated: 2023/05/24 14:38:41 by migo             ###   ########.fr       */
+/*   Updated: 2023/05/31 12:30:38 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minirt.h"
+#include "minirt_bonus.h"
 
 void	cam_rotate(int keycode, t_data *img)
 {
@@ -64,6 +64,7 @@ int	rt_close(void *param)
 	t_data	*img;
 
 	img = (t_data *) param;
+	l_lstclear(&img->set.light);
 	ft_lstclear(&img->set.objects);
 	exit(0);
 }

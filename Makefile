@@ -1,30 +1,41 @@
-NAME = minirt
-SRCS =	minirt.c get_next_line.c get_next_line_utils.c \
-		mrt_hook.c vec_cal.c vec_cal2.c vec_cal3.c	\
-		mrt_cam_init.c mrt_hit_obj.c mrt_input.c mrt_input2.c mrt_ratio.c \
-		mrt_ray_color.c mrt_set.c mrt_set_obj.c mrt_shadow.c mrt_utils.c mrt_set_ratio.c
+NAME = miniRT
+B_NAME = miniRT_bonus
+SRCS =	$(wildcard *.c)
+B_SRCS = $(wildcard ./bonus/*.c)
 OBJS = $(SRCS:.c=.o)
+B_OBJS = $(B_SRCS:.c=.o)
+CC = cc
 
+ifdef W_BO
+	OBJECTS = $(B_OBJS)
+	TARGET = $(B_NAME)
+else
+	OBJECTS = $(OBJS)
+	TARGET = $(NAME) 
+endif
 
-all : $(NAME)
+all : $(TARGET)
 
 %.o: %.c
 	$(CC) $(CCOP) -c $< -o $@
 
-$(NAME) : $(OBJS)
-	cc -lmlx -framework OpenGL -framework Appkit $(OBJS) -o $(NAME) -fsanitize=address
+$(NAME) : $(OBJECTS)
+	cc -lmlx -framework OpenGL -framework Appkit $(OBJECTS) -o $(NAME)
 
-bonus : $(OBJS)
-	cc -lmlx -framework OpenGL -framework Appkit $(OBJS) -o $(NAME)
+$(B_NAME) : $(OBJECTS)
+	cc -lmlx -framework OpenGL -framework Appkit $(OBJECTS) -o $(B_NAME)
+
+bonus : 
+	make W_BO=1 all
 
 clean :
-	rm -rf $(OBJS)
+	rm -rf $(OBJS) $(B_OBJS)
 .PHONY : clean
 
 fclean : clean
-	rm -rf $(NAME)
+	rm -rf $(NAME) $(B_NAME)
 .PHONY : fclean
 
-re : fclean
-	make all
-.PHONY : re
+re : fclean all
+
+.PHONY : bonus clean fclean re

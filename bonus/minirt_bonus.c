@@ -34,12 +34,36 @@ void	render(t_data *data, t_set *set, double width, double height)
 					v_mul_n(set->cam.ver, v)), set->cam.loc));
 			r.dir = unit_vector(r.dir);
 			my_mlx_pixel_put(data, i, j, re_color(r, set));
-
 		}
 	}
 }
 
-int	main_loop( t_data *img)
+void	anti_ali(t_data *img)
+{
+	int		i;
+	int		j;
+	t_vec	color;
+
+	j = 1;
+	while (j < 800)
+	{
+		i = 1;
+		while (i < 1200)
+		{
+			color = ch_color(gain_color(img, i, j));
+			color = v_add(color, ch_color(gain_color(img, i + 1, j)));
+			color = v_add(color, ch_color(gain_color(img, i - 1, j)));
+			color = v_add(color, ch_color(gain_color(img, i, j + 1)));
+			color = v_add(color, ch_color(gain_color(img, i, j - 1)));
+			color = v_mul_n(color, 0.2);
+			my_mlx_pixel_put(img, i, j, fl_color(color));
+			i++;
+		}
+		j++;
+	}
+}
+
+int	main_loop(t_data *img)
 {
 	mlx_destroy_image(img->mlx, img->img);
 	img->img = mlx_new_image(img->mlx, WIDTH, HEIGHT);
@@ -47,27 +71,36 @@ int	main_loop( t_data *img)
 	img->addr = mlx_get_data_addr(img->img, &img->bits_per_pixel,
 			&img->line_length, &img->endian);
 	render(img, &(img->set), WIDTH, HEIGHT);
+	// anti_ali(img);
 	mlx_put_image_to_window(img->mlx, img->win, img->img, 0, 0);
 	return (0);
+}
+
+void	xpm_map(t_data *img)
+{
+	int	img_width;
+	int	img_height;
+
+	img->set.img2 = malloc(sizeof(t_data));
+	img->set.img2->mlx = mlx_init();
+	img->set.img2->img = mlx_xpm_file_to_image(img->set.img2->mlx, "earth.xpm", &img_width, &img_height);
+    img->set.img2->addr = mlx_get_data_addr(img->set.img2->img, &img->set.img2->bits_per_pixel, &img->set.img2->line_length,
+                                 &img->set.img2->endian);
+	img->set.img2->width = img_width;
+	img->set.img2->height = img_height;
 }
 
 int	main(int argc, char **argv)
 {
 	t_data	img;
-	int		img_width;
-	int		img_height;
 
 	if (argc != 2)
 		return (printf("parameter error"));
 	checkmap(argv, &(img.set));
 	img.mlx = mlx_init();
-	img.set.img2 = malloc(sizeof(t_data));
-	img.set.img2->mlx = mlx_init();
+	xpm_map(&img);
 	img.win = mlx_new_window(img.mlx, WIDTH, HEIGHT, "ray tracing");
 	img.img = mlx_new_image(img.mlx, WIDTH, HEIGHT);
-	img.set.img2->img = mlx_xpm_file_to_image(img.set.img2->mlx, "earth.xpm", &img_width, &img_height);
-    img.set.img2->addr = mlx_get_data_addr(img.set.img2->img, &img.set.img2->bits_per_pixel, &img.set.img2->line_length,
-                                 &img.set.img2->endian);
 	img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel,
 			&img.line_length, &img.endian);
 	rt_hook(&img);

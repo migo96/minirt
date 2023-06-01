@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:10:42 by dmin              #+#    #+#             */
-/*   Updated: 2023/05/31 16:47:09 by migo             ###   ########.fr       */
+/*   Updated: 2023/06/01 11:38:37 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,4 +48,15 @@ int	fl_color(t_vec color)
 	if (color_blue > 255)
 		color_blue = 255;
 	return (color_red * 65536 + color_green * 256 + color_blue);
+}
+
+t_vec	ch_color(int color)
+{
+	t_vec check;
+
+	check.z = color % 256;
+	color /= 256;
+	check.y = color % 256;
+	check.x = color / 256;
+	return (check);
 }

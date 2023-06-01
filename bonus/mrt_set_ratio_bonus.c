@@ -6,7 +6,7 @@
 /*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/16 14:08:11 by migo              #+#    #+#             */
-/*   Updated: 2023/05/31 19:43:08 by migo             ###   ########.fr       */
+/*   Updated: 2023/06/01 15:32:09 by migo             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ void	hit_range(t_object *ob, t_set *set, t_ray contact, double t)
 	}
 }
 
-t_vec	sp_map(t_ray con, t_sphere *sp, t_set *set)
+t_vec	sp_map(t_ray con, t_sphere *sp, t_set *set, t_vec *normal)
 {
 	t_vec	check;
 	double	a;
@@ -92,19 +92,44 @@ t_vec	sp_map(t_ray con, t_sphere *sp, t_set *set)
 	int		c;
 	int		d;
 	int		color;
+	int		color1;
+	t_vec	show;
+	t_vec	ray;
 
+	ray = unit_vector(v_sub(set->light->loc, con.orig));
 	check = v_sub(con.orig, sp->center);
 	a = atan2(- check.y, check.x) + 3.14;
 	b = acos(-check.z / (sp->radius + 1));
-	c = (int)(a * 63);
-	d = (int)(b * 70);
-	d = 222 - d;
+	c = (int)(a * (set->img2->width / 6.28));
+	d = (int)(b * (set->img2->height / 3.14));
+	d = set->img2->height - d;
+	c = set->img2->width - c;
 	color = gain_color(set->img2, c, d);
-	check.z =  color % 256;
-	color /= 256;
-	check.y = color % 256;
-	check.x = color / 256;
-	return (check);
+	if (c + 1 <= set->img2->width)
+		color1 = gain_color(set->img2, c + 1, d) - color;
+	else
+		color1 = gain_color(set->img2, 0, d) - color;
+	if (c - 1 >= 0)
+		color1 += gain_color(set->img2, c - 1, d) - color;
+	else
+		color1 += gain_color(set->img2, 0, d);
+	if (d + 1 <= set->img2->height)
+		color1 += gain_color(set->img2, c, d + 1) - color;
+	else
+		color1 += gain_color(set->img2, c, 0) - color;
+	if (d - 1 >= 0)
+		color1 += gain_color(set->img2, c, d - 1) - color;
+	else
+		color1 += gain_color(set->img2, c, 0) - color;
+	color1 /= 4;
+	if (color1 > 0)
+	{
+		show = v_mul_n(ch_color(color1), 0.001);
+		if (length(show) > 0.25)
+			(*normal) = v_add((*normal), v_mul_n(ray, length(show)));
+	}
+	*normal = *normal;
+	return (ch_color(color));
 }
 
 void	set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con)
@@ -119,8 +144,7 @@ void	set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con)
 	if (ob->type == SPHERE)
 	{
 		sp = ob->object;
-		//sp_map(con, sp, set);
-		ob->color = sp_map(con, sp, set);
+		ob->color = sp_map(con, sp, set, &normal);
 		if (check_in_sp(sp, set, con))
 			normal = v_mul_n(normal, -1);
 	}

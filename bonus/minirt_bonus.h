@@ -169,6 +169,8 @@ typedef struct s_data
 	int		bits_per_pixel;
 	int		line_length;
 	int		endian;
+	int		width;
+	int		height;
 	t_set	set;
 }	t_data;
 
@@ -187,6 +189,7 @@ t_vec		unit_vector(t_vec v);
 double		length(t_vec e);
 t_vec		v_add_n(t_vec v1, double n);
 int			fl_color(t_vec color);
+t_vec		ch_color(int color);
 
 t_object	*ft_lstnew(int nb, char *map);
 t_light		*l_lstnew(char *map);

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   minirt_bonus.h                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/06/02 16:24:03 by dmin              #+#    #+#             */
+/*   Updated: 2023/06/05 13:32:56 by migo             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef MINIRT_BONUS_H
 # define MINIRT_BONUS_H
 
@@ -44,7 +56,7 @@ typedef struct s_cone
 	t_vec	normal;
 	double	height;
 	double	radius;
-	t_vec	color;
+	double	tran;
 }		t_cone;
 
 typedef struct s_circle
@@ -53,10 +65,7 @@ typedef struct s_circle
 	t_vec	normal;
 	double	height;
 	double	radius;
-	double	refl;
-	double	refr;
 	double	tran;
-	t_vec	color;
 }		t_circle;
 
 typedef struct s_hyper
@@ -67,7 +76,7 @@ typedef struct s_hyper
 	double	b;
 	double	c;
 	double	height;
-	t_vec	color;
+	double	tran;	
 }		t_hyper;
 
 typedef struct s_checker
@@ -82,10 +91,8 @@ typedef struct s_sphere
 {
 	t_vec	center;
 	double	radius;
-	double	refl;
-	double	refr;
 	double	tran;
-	t_vec	color;
+	double	mty;
 }		t_sphere;
 
 typedef struct s_am_light
@@ -94,7 +101,8 @@ typedef struct s_am_light
 	t_vec	color;
 }		t_am_light;
 
-typedef struct  s_img {
+typedef struct s_img
+{
 	void	*img;
 	char	*addr;
 	int		bits_per_pixel;
@@ -106,10 +114,8 @@ typedef struct s_plane
 {
 	t_vec	center;
 	t_vec	normal;
-	double	refl;
-	double	refr;
 	double	tran;
-	t_vec	color;
+	double	mty;
 }		t_plane;
 
 typedef struct s_cylinder
@@ -118,10 +124,7 @@ typedef struct s_cylinder
 	t_vec	normal;
 	double	height;
 	double	radius;
-	double	refl;
-	double	refr;
 	double	tran;
-	t_vec	color;
 }		t_cylinder;
 
 typedef struct s_cam
@@ -190,6 +193,7 @@ double		length(t_vec e);
 t_vec		v_add_n(t_vec v1, double n);
 int			fl_color(t_vec color);
 t_vec		ch_color(int color);
+void		set_fr_fl_color(char **map, t_object *ob);
 
 t_object	*ft_lstnew(int nb, char *map);
 t_light		*l_lstnew(char *map);
@@ -240,7 +244,7 @@ void		set_obj(t_object *ob, t_set *set, t_vec normal, t_ray con);
 void		rt_hook(t_data *img);
 int			rt_close(void *param);
 
-t_circle	*set_circle(char *map, t_object *ob, int nb);
+t_circle	*set_circle(char *map, t_object *ob, int norm_dir);
 t_cone		*set_cone(char *map, t_object *ob);
 t_hyper		*set_hyper(char *map, t_object *ob);
 
@@ -253,5 +257,26 @@ void		ratio_hy(t_ray r, double t, t_object *ob, t_set *set);
 
 void		set_obj_bo(t_object *ob, t_set *set, t_vec normal, t_ray con);
 void		classification_map_bo(char *map, int i, t_set *set);
+
+t_ray		refract_color(t_ray r, double t, t_object *ob);
+t_vec		get_refr_sp_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refr_cy_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refr_pl_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refr_cn_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refr_cir_norm(t_ray r, double t, t_object *ob, t_ray contact);
+
+t_ray		reflect_color(t_ray r, double t, t_object *ob);
+t_vec		get_refl_sp_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refl_cy_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refl_pl_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refl_cn_norm(t_ray r, double t, t_object *ob, t_ray contact);
+t_vec		get_refl_cir_norm(t_ray r, double t, t_object *ob, t_ray contact);
+
+int			check_in_sp(t_sphere *sp, t_set *set, t_ray contact);
+int			check_in_cy(t_cylinder *cy, t_set *set, t_vec normal);
+int			check_in_cn(t_cone *cn, t_set *set, t_vec normal);
+
+t_vec		sp_map(t_ray con, t_sphere *sp, t_set *set, t_vec *normal);
+t_vec		pl_map(t_ray con, t_plane *pl, t_set *set, t_vec *normal);
 
 #endif

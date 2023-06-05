@@ -64,6 +64,7 @@ int	rt_close(void *param)
 	t_data	*img;
 
 	img = (t_data *) param;
+	free(img->set.img2);
 	l_lstclear(&img->set.light);
 	ft_lstclear(&img->set.objects);
 	exit(0);

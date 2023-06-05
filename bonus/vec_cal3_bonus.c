@@ -52,7 +52,7 @@ int	fl_color(t_vec color)
 
 t_vec	ch_color(int color)
 {
-	t_vec check;
+	t_vec	check;
 
 	check.z = color % 256;
 	color /= 256;

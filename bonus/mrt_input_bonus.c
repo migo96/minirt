@@ -12,6 +12,13 @@
 
 #include "minirt_bonus.h"
 
+void	add_cylinder(char *map, t_set *set)
+{
+	ft_lstadd_front(&set->objects, ft_lstnew(1, map));
+	ft_lstadd_front(&set->objects, ft_lstnew(5, map));
+	ft_lstadd_front(&set->objects, ft_lstnew(6, map));
+}
+
 void	classification_map(char *map, int i, t_set *set)
 {
 	if (map[i] == 'C')
@@ -29,20 +36,14 @@ void	classification_map(char *map, int i, t_set *set)
 	else if (map[i] == 'p' && map[i + 1] == 'l')
 		ft_lstadd_front(&set->objects, ft_lstnew(2, &map[i]));
 	else if (map[i] == 'c' && map[i + 1] == 'y')
+		add_cylinder(map + i, set);
+	else if (map[i] == 'c' && map[i + 1] == 'n')
 	{
-		ft_lstadd_front(&set->objects, ft_lstnew(1, &map[i]));
-		ft_lstadd_front(&set->objects, ft_lstnew(5, &map[i]));
+		ft_lstadd_front(&set->objects, ft_lstnew(CONE, &map[i]));
 		ft_lstadd_front(&set->objects, ft_lstnew(6, &map[i]));
 	}
-	else if (map[i] == 'c' && map[i + 1] == 'n')
-		ft_lstadd_front(&set->objects, ft_lstnew(CONE, &map[i]));
-	else if (map[i] == 'h' && map[i + 1] == 'y')
-		ft_lstadd_front(&set->objects, ft_lstnew(HYPER, &map[i]));
-	else
-	{
-		if (map[i] != '\0')
-			exit(printf("%c is wrong parameter", map[i]));
-	}
+	else if (map[i] != '\0')
+		exit(printf("%c is wrong parameter", map[i]));
 }
 
 double	check_dot(char **map, double flag)

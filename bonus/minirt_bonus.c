@@ -71,23 +71,35 @@ int	main_loop(t_data *img)
 	img->addr = mlx_get_data_addr(img->img, &img->bits_per_pixel,
 			&img->line_length, &img->endian);
 	render(img, &(img->set), WIDTH, HEIGHT);
-	// anti_ali(img);
 	mlx_put_image_to_window(img->mlx, img->win, img->img, 0, 0);
 	return (0);
 }
 
 void	xpm_map(t_data *img)
 {
-	int	img_width;
-	int	img_height;
+	int		img_width;
+	int		img_height;
+	int		i;
+	char	*map[3];
 
-	img->set.img2 = malloc(sizeof(t_data));
-	img->set.img2->mlx = mlx_init();
-	img->set.img2->img = mlx_xpm_file_to_image(img->set.img2->mlx, "earth.xpm", &img_width, &img_height);
-    img->set.img2->addr = mlx_get_data_addr(img->set.img2->img, &img->set.img2->bits_per_pixel, &img->set.img2->line_length,
-                                 &img->set.img2->endian);
-	img->set.img2->width = img_width;
-	img->set.img2->height = img_height;
+	i = 0;
+	map[0] = "earth.xpm";
+	map[1] = "earth2.xpm";
+	map[2] = "tile.xpm";
+	img->set.img2 = malloc(sizeof(t_data) * 3);
+	while (i < 3)
+	{
+		img->set.img2[i].mlx = mlx_init();
+		img->set.img2[i].img = mlx_xpm_file_to_image(img->set.img2[i].mlx, \
+							map[i], &img_width, &img_height);
+		img->set.img2[i].addr = mlx_get_data_addr(img->set.img2[i].img, \
+				&img->set.img2[i].bits_per_pixel, \
+				&img->set.img2[i].line_length, \
+				&img->set.img2[i].endian);
+		img->set.img2[i].width = img_width;
+		img->set.img2[i].height = img_height;
+		i++;
+	}
 }
 
 int	main(int argc, char **argv)

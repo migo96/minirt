@@ -30,10 +30,10 @@ t_object	*ft_lstnew(int nb, char *map)
 		ob->object = (void *)set_plane(map, ob);
 	else if (nb == CONE)
 		ob->object = (void *)set_cone(map, ob);
-	else if (nb == HYPER)
-		ob->object = (void *)set_hyper(map, ob);
-	else if (nb == 5 || nb == 6)
-		ob->object = (void *)set_circle(map, ob, nb);
+	else if (nb == 5)
+		ob->object = (void *)set_circle(map, ob, 1);
+	else if (nb == 6)
+		ob->object = (void *)set_circle(map, ob, -1);
 	ob->rank = i;
 	i++;
 	ob->next = NULL;
@@ -90,40 +90,4 @@ void	l_lstclear(t_light **lst)
 		free(*lst);
 		*lst = tmp;
 	}
-}
-
-void	ft_lstclear(t_object **lst)
-{
-	t_object	*tmp;
-
-	if (*lst == 0)
-		return ;
-	while (*lst)
-	{
-		tmp = (*lst)->next;
-		free ((*lst)->object);
-		free(*lst);
-		*lst = tmp;
-	}
-}
-
-void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
-{
-	char	*dst;
-
-	dst = data->addr + (y * data->line_length + x * (data->bits_per_pixel / 8));
-	*(unsigned int *)dst = color;
-}
-
-double	degrees_to_radians(double degrees)
-{
-	return (degrees * 3.141529 / 180.0);
-}
-
-int	gain_color(t_data *data, int x, int y)
-{
-    char    *dst;
- 
-    dst = data->addr + (y * data->line_length + x * (data->bits_per_pixel / 8));
-    return (*(unsigned int*)dst);
 }
